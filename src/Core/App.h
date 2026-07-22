@@ -18,6 +18,7 @@ namespace Tapedawf {
             if (!initWindow()) return false;
             initImGui();
             if (!initAudio()) return false;
+
             return true;
         }
 
@@ -29,7 +30,10 @@ namespace Tapedawf {
                 ImGui_ImplGlfw_NewFrame();
                 ImGui::NewFrame();
 
-                ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+                if (m_activeProject) {
+                    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
+                    ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport());
+                }
 
                 renderUI();
                 renderFrame();
@@ -67,7 +71,7 @@ namespace Tapedawf {
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
             glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
-            m_window = glfwCreateWindow(1280, 720, "Tapedawf", nullptr, nullptr);
+            m_window = glfwCreateWindow(640, 480, "TapeDAWf - Project Manager", nullptr, nullptr);
 
             if (!m_window) {
                 glfwTerminate();
@@ -113,7 +117,12 @@ namespace Tapedawf {
         void renderUI() {
             if (!m_activeProject) {
                 if (auto newProj = m_pmWindow.render(m_projectManager)) {
+                    std::string title = "TapeDAWf - " + newProj->name;
+
                     m_activeProject = std::make_unique<ProjectWindow>(std::move(newProj), m_controls);
+
+                    glfwSetWindowSize(m_window, 1280, 720);
+                    glfwSetWindowTitle(m_window, title.c_str());
                 }
                 return;
             }
