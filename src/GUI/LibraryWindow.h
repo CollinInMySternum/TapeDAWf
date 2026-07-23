@@ -34,6 +34,9 @@ namespace Tapedawf {
                 ImGui::BeginChild("LeftFolderList", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 
                 ImGui::TextDisabled("Root Directories");
+
+                ImGui::Spacing();
+                ImGui::Separator();
                 ImGui::Spacing();
 
                 for (size_t i = 0; i < project.libraryDirectories.size(); ++i) {
@@ -58,7 +61,7 @@ namespace Tapedawf {
                 ImGui::Spacing();
 
                 // Add folder button
-                if (ImGui::Button("Add Folder...", ImVec2(-1, 0))) {
+                if (ImGui::Button("+ Directory", ImVec2(-1, 0))) {
                     auto selection = pfd::select_folder("Select Audio Library Folder").result();
 
                     if (!selection.empty()) {
@@ -81,6 +84,9 @@ namespace Tapedawf {
 
                 if (!m_selectedPath.empty() && std::filesystem::exists(m_selectedPath)) {
                     ImGui::TextDisabled("Viewing: %s", m_selectedPath.string().c_str());
+
+                    ImGui::Spacing();
+                    ImGui::Separator();
                     ImGui::Spacing();
 
                     renderDirectoryTree(m_selectedPath);

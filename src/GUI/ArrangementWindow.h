@@ -85,6 +85,8 @@ namespace Tapedawf {
             const char* typeBadge = (track->getType() == TrackType::Audio) ? "[AUDIO]" : "[MIDI]";
             ImGui::Text("%s %s", typeBadge, track->name.c_str());
 
+            ImGui::Spacing();
+
             // Mute / Solo / Arm
             bool muted = track->isMuted.load();
             if (ImGui::Checkbox("M", &muted)) track->isMuted.store(muted);
