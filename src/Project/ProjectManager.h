@@ -20,48 +20,48 @@ namespace Tapedawf {
     class ProjectManager {
     public:
         ProjectManager() {
-
+            loadManifest();
         }
 
         std::vector<ProjectEntry> getProjects() const {
             std::vector<ProjectEntry> projects;
             std::error_code ec;
 
-            if (!std::filesystem::exists(m_projectsRoot, ec)) return projects;
+            for (const auto& pathStr : m_recentPaths) {
+                std::filesystem::path path(pathStr);
 
-            auto it = std::filesystem::recursive_directory_iterator(m_projectsRoot, ec);
-            if (ec) {
-                return projects;
-            }
+                if (!std::filesystem::exists(path, ec)) continue;
 
-            for (const auto& entry : it) {
-                if (entry.is_regular_file() && entry.path().extension() == ".json") {
-                    auto path = entry.path();
-                    auto ftime = std::filesystem::last_write_time(path, ec);
-                    if (ec) ftime = std::filesystem::file_time_type::min();
+                auto ftime = std::filesystem::last_write_time(path, ec);
+                if (ec) ftime = std::filesystem::file_time_type::min();
 
-                    std::string projName = path.stem().string();
+                std::string projName = path.stem().string();
 
-                    std::ifstream file(path);
-                    if (file.is_open()) {
-                        nlohmann::json j;
-                        try {
-                            file >> j;
-                            if (j.contains("name") && j["name"].is_string()) {
-                                projName = j["name"].get<std::string>();
-                            }
-                        } catch (...) {}
-                    }
+                std::ifstream file(path);
+                if (file.is_open()) {
+                    nlohmann::json j;
 
-                    projects.push_back({projName, path, ftime, getFileCreationTime(path)});
+                    try {
+                        file >> j;
+
+                        if (j.contains("name") && j["name"].is_string()) {
+                            projName = j["name"].get<std::string>();
+                        }
+                    } catch (...) {}
                 }
+
+                projects.push_back({projName, path, ftime, getFileCreationTime(path)});
             }
+
+            std::sort(projects.begin(), projects.end(), [](const ProjectEntry& a, const ProjectEntry& b) {
+                return a.modifiedTime > b.modifiedTime;
+            });
 
             return projects;
         }
 
         std::unique_ptr<Project> createNewProject(const std::string& name, const std::filesystem::path& customDirectory = "") {
-            std::filesystem::path targetDir = customDirectory.empty() ? (m_projectsRoot / name) : customDirectory;
+            std::filesystem::path targetDir = customDirectory / name;
 
             std::error_code ec;
             std::filesystem::create_directories(targetDir, ec);
@@ -71,6 +71,9 @@ namespace Tapedawf {
             proj->filePath = targetDir / (name + ".json");
 
             proj->saveToDisk();
+
+            addToManifest(proj->filePath);
+
             return proj;
         }
 
@@ -85,21 +88,59 @@ namespace Tapedawf {
                 return nullptr;
             }
 
-           return Project::fromJson(j, path);
-        }
+            addToManifest(path);
 
-        const std::filesystem::path& getProjectsRoot() const {
-            return m_projectsRoot;
+            return Project::fromJson(j, path);
         }
 
     private:
-        std::filesystem::path m_projectsRoot = R"(C:\TapedawfProjects)";
+        std::filesystem::path m_manifestPath = "tapedawf_manifest.json";
+        std::vector<std::string> m_recentPaths;
 
         std::filesystem::file_time_type getFileCreationTime(const std::filesystem::path& path) const {
             std::error_code ec;
-            auto ftime = std::filesystem::last_write_time(path, ec);
+            return std::filesystem::last_write_time(path, ec);;
+        }
 
-            return ftime;
+        void loadManifest() {
+            std::ifstream file(m_manifestPath);
+
+            if (file.is_open()) {
+                nlohmann::json j;
+                try {
+                    file >> j;
+                    if (j.contains("recent_projects") && j["recent_projects"].is_array()) {
+                        for (const auto& p : j["recent_projects"]) {
+                            m_recentPaths.push_back(p.get<std::string>());
+                        }
+                    }
+                } catch (...) {}
+            }
+        }
+
+        void saveManifest() const {
+            nlohmann::json j;
+
+            j["recent_projects"] = m_recentPaths;
+
+            std::ofstream file(m_manifestPath);
+            if (file.is_open()) {
+                file << j.dump(4);
+            }
+        }
+
+        void addToManifest(const std::filesystem::path& path) {
+            std::string pathStr = path.string();
+
+            // Remove it if it already exists so we don't get duplicates
+            auto it = std::find(m_recentPaths.begin(), m_recentPaths.end(), pathStr);
+            if (it != m_recentPaths.end()) {
+                m_recentPaths.erase(it);
+            }
+
+            // Insert at the front
+            m_recentPaths.insert(m_recentPaths.begin(), pathStr);
+            saveManifest();
         }
     };
 }

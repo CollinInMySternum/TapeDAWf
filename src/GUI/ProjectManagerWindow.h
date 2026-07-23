@@ -2,6 +2,7 @@
 
 #include <imgui.h>
 #include <memory>
+#include <portable-file-dialogs.h>
 
 #include "Project/ProjectManager.h"
 #include "Common/Log.h"
@@ -17,25 +18,35 @@ namespace Tapedawf {
                 std::strncpy(m_newName, "New Project", sizeof(m_newName) - 1);
                 m_newName[sizeof(m_newName) - 1] = '\0';
 
-                std::string rootStr = manager.getProjectsRoot().string();
-                std::strncpy(m_newPath, rootStr.c_str(), sizeof(m_newPath) - 1);
+                std::string defaultPath = (std::filesystem::current_path() / "Projects").string();
+                std::strncpy(m_newPath, defaultPath.c_str(), sizeof(m_newPath) - 1);
                 m_newPath[sizeof(m_newPath) - 1] = '\0';
 
-                m_initialized = true; // Locks initialization out of future frames
+                m_initialized = true;
             }
 
             std::unique_ptr<Project> loadedProject = nullptr;
 
-            ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-            ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+            ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-            ImGui::Begin("Welcome to Tapedawf!", nullptr, ImGuiWindowFlags_NoCollapse);
+            ImGui::SetNextWindowPos(viewport->WorkPos);
+            ImGui::SetNextWindowSize(viewport->WorkSize);
+
+            ImGuiWindowFlags windowFlags =
+                ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoDocking;
+
+            ImGui::Begin("Welcome to TapeDAWf!", nullptr, windowFlags);
 
             // Left Side: Recent projects
             ImGui::BeginChild("Projects", ImVec2(250, 0), true);
             ImGui::Text("Projects");
             ImGui::Separator();
 
+            ImGui::BeginChild("ProjectList", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
             for (const auto& entry : manager.getProjects()) {
                 if (ImGui::Selectable(entry.name.c_str())) {
                     LOG("ProjectManager", "User selected project to load: '{}' at path: '{}'", entry.name, entry.path.string());
@@ -50,19 +61,42 @@ namespace Tapedawf {
             }
             ImGui::EndChild();
 
+            if (ImGui::Button("Open Other...", ImVec2(-1, 0))) {
+                auto selection = pfd::open_file("Select Project File", "", {"Tapedawf Projects", "*.json"}).result();
+                if (!selection.empty()) {
+                    loadedProject = manager.loadProject(selection[0]);
+                }
+            }
+
+            ImGui::EndChild();
             ImGui::SameLine();
 
-            // Right side: Create New
+            // Right side: Create new
+
             ImGui::BeginChild("NewProject", ImVec2(0, 0), true);
             ImGui::Text("Create New Project");
             ImGui::Separator();
+            ImGui::Spacing();
 
             ImGui::InputText("Name", m_newName, IM_ARRAYSIZE(m_newName));
-            ImGui::InputText("Path", m_newPath, IM_ARRAYSIZE(m_newPath));
+
+            // Set up a table or straightforward layout for input + browse button
+            ImGui::InputText("Location", m_newPath, IM_ARRAYSIZE(m_newPath));
+            ImGui::SameLine();
+            if (ImGui::Button("Browse...")) {
+                auto selection = pfd::select_folder("Select Project Location").result();
+                if (!selection.empty()) {
+                    std::strncpy(m_newPath, selection.c_str(), sizeof(m_newPath) - 1);
+                    m_newPath[sizeof(m_newPath) - 1] = '\0';
+                }
+            }
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
 
             if (ImGui::Button("Create", ImVec2(120, 30))) {
                 std::filesystem::path dir(m_newPath);
-                dir /= m_newName;
 
                 LOG("ProjectManager", "Attempting to create new project '{}' at directory: '{}'", m_newName, dir.string());
 
