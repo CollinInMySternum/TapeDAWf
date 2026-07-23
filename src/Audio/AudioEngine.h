@@ -5,6 +5,8 @@
 #include <type_traits>
 #include "Common/AudioCommands.h"
 
+#include "Common/Log.h"
+
 namespace Tapedawf {
     class AudioEngine {
     public:
@@ -23,13 +25,13 @@ namespace Tapedawf {
             deviceConfig.pUserData = this;
 
             if (ma_device_init(NULL, &deviceConfig, &m_device) != MA_SUCCESS) {
-                std::cerr << "[AudioEngine] Failed to initialize playback device.\n";
+                LOG("AudioEngine", "Failed to initialize playback device.");
                 return false;
             }
 
             char deviceName[256];
             if (ma_device_get_name(&m_device, ma_device_type_playback, deviceName, sizeof(deviceName), NULL) == MA_SUCCESS) {
-                std::cout << "[AudioEngine] Device initialized: " << deviceName << '\n';
+                LOG("AudioEngine", "Playback device initialized: {}", deviceName);
             }
 
             return true;

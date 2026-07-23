@@ -8,16 +8,22 @@
 #include "GUI/ArrangementWindow.h"
 #include "Project/Project.h"
 
+#include "Common/Log.h"
+
 namespace Tapedawf {
     class ProjectWindow {
     public:
 
-        ProjectWindow(std::unique_ptr<Project> project, AudioControls& controls) : m_project(std::move(project)), m_controls(controls) {}
+        ProjectWindow(std::unique_ptr<Project> project, AudioControls& controls) : m_project(std::move(project)), m_controls(controls) {
+            LOG("ProjectWindow", "ProjectWindow instantiated.");
+        }
 
         bool render() {
             bool keepProjectOpen = true;
 
             if (m_firstLayout) {
+                LOG("ProjectWindow", "Building initial ImGui docking layout...");
+
                 m_firstLayout = false;
 
                 // Grab the ID of the dockspace created in App.h
@@ -43,15 +49,19 @@ namespace Tapedawf {
                 }
 
                 ImGui::DockBuilderFinish(dockspace_id);
+                LOG("ProjectWindow", "Docking layout setup complete");
             }
 
             // Menu
             if (ImGui::BeginMainMenuBar()) {
                 if (ImGui::BeginMenu("File")) {
                     if (ImGui::MenuItem("Save Project", "Ctrl+S")) {
+                        LOG("ProjectWindow", "Save Project triggered by user.");
                         m_project->saveToDisk();
+                        LOG("ProjectWindow", "Project saved to disk successfully.");
                     }
                     if (ImGui::MenuItem("Close Project")) {
+                        LOG("ProjectWindow", "Close Project triggered by user.");
                         keepProjectOpen = false;
                     }
                     ImGui::EndMenu();

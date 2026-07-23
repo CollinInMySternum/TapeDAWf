@@ -10,19 +10,33 @@
 
 #include "GUI/ProjectManagerWindow.h"
 #include "GUI/ProjectWindow.h"
+#include "Common/Log.h"
 
 namespace Tapedawf {
     class App {
     public:
         bool init() {
-            if (!initWindow()) return false;
+            LOG("App", "Initializing application...");
+            if (!initWindow()) {
+                LOG("App", "Failed to initialize GLFW window!");
+                return false;
+            }
+            LOG("App", "GLFW window initialized successfully.");
+
             initImGui();
-            if (!initAudio()) return false;
+            LOG("App", "ImGui context and backend initialized.");
+
+            if (!initAudio()) {
+                LOG("App", "Failed to initialize/start audio engine!");
+                return false;
+            }
+            LOG("App", "Audio engine started successfully.");
 
             return true;
         }
 
         void run() {
+            LOG("App", "Entering main application loop...");
             while (!glfwWindowShouldClose(m_window)) {
                 glfwPollEvents();
 
@@ -38,18 +52,26 @@ namespace Tapedawf {
                 renderUI();
                 renderFrame();
             }
+            LOG("App", "Main loop terminated.");
         }
 
         void shutdown() {
+            LOG("App", "Shutting down...");
+
             m_audioEngine.stop();
             m_audioEngine.shutdown();
+            LOG("App", "Stopped audio engine.");
 
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplGlfw_Shutdown();
             ImGui::DestroyContext();
+            LOG("App", "Shutdown ImGui.");
 
             if (m_window) glfwDestroyWindow(m_window);
             glfwTerminate();
+
+            LOG("App", "Destroyed GLFW window.");
+            LOG("App", "Shutdown complete.");
         }
 
     private:
@@ -63,6 +85,7 @@ namespace Tapedawf {
         std::unique_ptr<ProjectWindow> m_activeProject{nullptr};
 
         bool initWindow() {
+            LOG("Window", "Initializing GLFW...");
             if (!glfwInit()) return false;
 
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -71,9 +94,11 @@ namespace Tapedawf {
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
             glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
+            LOG("Window", "Creating GLFW window @(640x480)");
             m_window = glfwCreateWindow(640, 480, "TapeDAWf - Project Manager", nullptr, nullptr);
 
             if (!m_window) {
+                LOG("Window", "GLFW window creation failed!");
                 glfwTerminate();
                 return false;
             }
@@ -81,10 +106,14 @@ namespace Tapedawf {
             glfwMakeContextCurrent(m_window);
             glfwSwapInterval(1); // VSync
 
+            LOG("Window", "OpenGL context set and VSync enabled.");
+
             return true;
         }
 
         void initImGui() {
+            LOG("ImGUI", "Configuring ImGui flags and style...");
+
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
             ImGuiIO& io = ImGui::GetIO();
@@ -108,9 +137,13 @@ namespace Tapedawf {
         }
 
         bool initAudio() {
+            LOG("AudioEngine", "Initializing audio backend (48000Hz, 2 channels)...");
+
             if (m_audioEngine.init(m_controls, 48000, 2)) {
+                LOG("AudioEngine", "Starting audio stream...");
                 return m_audioEngine.start();
             }
+            LOG("AudioEngine", "Audio initialization failed.");
             return false;
         }
 
@@ -118,9 +151,11 @@ namespace Tapedawf {
             if (!m_activeProject) {
                 if (auto newProj = m_pmWindow.render(m_projectManager)) {
                     std::string title = "TapeDAWf - " + newProj->name;
+                    LOG("App", "Project loaded/created successfully: '{}'", newProj->name);
 
                     m_activeProject = std::make_unique<ProjectWindow>(std::move(newProj), m_controls);
 
+                    LOG("Window", "Resizing window to (1280x720) for DAW workspace.");
                     glfwSetWindowSize(m_window, 1280, 720);
                     glfwSetWindowTitle(m_window, title.c_str());
                 }
@@ -128,7 +163,12 @@ namespace Tapedawf {
             }
 
             if (!m_activeProject->render()) {
+                LOG("App", "Project close requested by user. Resetting active project.");
                 m_activeProject.reset();
+
+                LOG("Window", "Resizing window back to (640x480) for Project Manager.");
+                glfwSetWindowSize(m_window, 640, 480);
+                glfwSetWindowTitle(m_window, "TapeDAWf - Project Manager");
             }
         }
 
