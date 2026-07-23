@@ -55,6 +55,13 @@ FetchContent_Declare(
     GIT_TAG v3.12.0
 )
 
+# WhereAmI
+FetchContent_Declare(
+    whereami
+    GIT_REPOSITORY https://github.com/gpakosz/whereami.git
+    GIT_TAG master
+)
+
 # ==============================================================================
 # 2. DOWNLOAD AND EXTRACT ALL FETCHED CONTENT
 # ==============================================================================
@@ -65,6 +72,7 @@ FetchContent_MakeAvailable(
     readerwriterqueue
     portable-file-dialogs
     json
+    whereami
 )
 
 # ==============================================================================
@@ -78,17 +86,17 @@ find_package(OpenGL REQUIRED)
 
 # ImGui Static Library Setup
 add_library(imgui STATIC
-        ${imgui_SOURCE_DIR}/imgui.cpp
-        ${imgui_SOURCE_DIR}/imgui_draw.cpp
-        ${imgui_SOURCE_DIR}/imgui_tables.cpp
-        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 target_include_directories(imgui PUBLIC
-        ${imgui_SOURCE_DIR}
-        ${imgui_SOURCE_DIR}/backends
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
 )
 
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
@@ -97,17 +105,25 @@ target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 add_library(miniaudio INTERFACE)
 target_include_directories(miniaudio INTERFACE ${miniaudio_SOURCE_DIR})
 
+# WhereAmI source setup
+add_library(whereami STATIC
+    ${whereami_SOURCE_DIR}/src/whereami.c
+)
+target_include_directories(whereami PUBLIC
+    ${whereami_SOURCE_DIR}/src
+)
+
 # ==============================================================================
 # 5. CONFIGURE MAIN EXECUTABLE
 # ==============================================================================
 add_executable(Tapedawf
-    src/main.cpp
-    src/audio/miniaudio_impl.cpp
+    Source/main.cpp
+    Source/audio/miniaudio_impl.cpp
 )
 
 # Include directories for source code
 target_include_directories(Tapedawf PRIVATE
-    src
+    Source
 )
 target_link_libraries(Tapedawf PRIVATE
     imgui # UI
@@ -116,5 +132,17 @@ target_link_libraries(Tapedawf PRIVATE
     readerwriterqueue # Lock-free SPSC Queue
     OpenGL::GL # Graphics
     portable_file_dialogs # File management
-    nlohmann_json::nlohmann_json
+    nlohmann_json::nlohmann_json # File saving
+    whereami
+)
+
+# ==============================================================================
+# 6. COPY ASSETS TO BUILD DIRECTORY
+# ==============================================================================
+add_custom_command(
+    TARGET Tapedawf POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources"
+    "$<TARGET_FILE_DIR:Tapedawf>/Resources"
+    COMMENT "Syncing Assets folder to build output directory"
 )

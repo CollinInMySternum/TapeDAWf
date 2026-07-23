@@ -8,7 +8,7 @@
 #include "GUI/ArrangementWindow.h"
 #include "Project/Project.h"
 
-#include "Common/Log.h"
+#include "Common/Logging.h"
 
 namespace Tapedawf {
     class ProjectWindow {

@@ -10,7 +10,9 @@
 
 #include "GUI/ProjectManagerWindow.h"
 #include "GUI/ProjectWindow.h"
-#include "Common/Log.h"
+#include "Common/Logging.h"
+#include "whereami.h"
+#include "Common/Styles.h"
 
 namespace Tapedawf {
     class App {
@@ -93,6 +95,7 @@ namespace Tapedawf {
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
             glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+            glfwWindowHint(GLFW_SRGB_CAPABLE, GL_FALSE);
 
             LOG("Window", "Creating GLFW window @(640x480)");
             m_window = glfwCreateWindow(640, 480, "TapeDAWf - Project Manager", nullptr, nullptr);
@@ -122,15 +125,17 @@ namespace Tapedawf {
             io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
             io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-            ImGui::StyleColorsDark();
-
-            // Fine tuning viewport styling
             ImGuiStyle& style = ImGui::GetStyle();
+            Styles::setupImGuiNuklearDarkGrayStyle(style);
 
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
                 style.WindowRounding = 0.0f;
                 style.Colors[ImGuiCol_WindowBg].w = 1.0f;
             }
+
+            std::string fontPath = getExecutableRelativePath("Resources/Fonts/Montserrat/Montserrat-Medium.ttf").string();
+            std::cout << fontPath;
+            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
 
             ImGui_ImplGlfw_InitForOpenGL(m_window, true);
             ImGui_ImplOpenGL3_Init("#version 330");
@@ -191,6 +196,22 @@ namespace Tapedawf {
                 glfwMakeContextCurrent(backup_current_context);
             }
             glfwSwapBuffers(m_window);
+        }
+
+
+        std::filesystem::path getExecutablePath() {
+            int length, dirnameLength;
+            wai_getExecutablePath(NULL, 0, &length);
+
+            std::string path(length, '\0');
+            wai_getExecutablePath(&path[0], length, &dirnameLength);
+
+            path.resize(dirnameLength);
+            return std::filesystem::path(path);
+        }
+
+        std::filesystem::path getExecutableRelativePath(const std::filesystem::path& relativePath) {
+            return (getExecutablePath() / relativePath).lexically_normal();
         }
     };
 }

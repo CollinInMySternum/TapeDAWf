@@ -77,6 +77,8 @@ namespace Tapedawf {
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, ROUNDING);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
 
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_Button));
+
             std::string headerId = "Header_" + std::to_string(index);
 
             ImGui::BeginChild(headerId.c_str(), ImVec2(0, TRACK_HEIGHT), true, ImGuiWindowFlags_NoScrollbar);
@@ -107,6 +109,8 @@ namespace Tapedawf {
             }
 
             ImGui::EndChild();
+
+            ImGui::PopStyleColor();
             ImGui::PopStyleVar(2);
 
             // Right click context menu
@@ -128,9 +132,12 @@ namespace Tapedawf {
 
             ImDrawList* drawList = ImGui::GetWindowDrawList();
 
+            ImU32 trackBgColor = ImGui::GetColorU32(ImGuiCol_FrameBg);
+            ImU32 trackBorderColor = ImGui::GetColorU32(ImGuiCol_Border);
+
             // Sequencer background
-            drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), IM_COL32(35, 35, 40, 255));
-            drawList->AddRect(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), IM_COL32(50, 50, 60, 255));
+            drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), trackBgColor);
+            drawList->AddRect(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), trackBorderColor);
 
             // Grid lines
             float stepPx = zoomPixelsPerSecond;
@@ -138,7 +145,7 @@ namespace Tapedawf {
                 drawList->AddLine(
                     ImVec2(canvasPos.x + x, canvasPos.y),
                     ImVec2(canvasPos.x + x, canvasPos.y + canvasSize.y),
-                    IM_COL32(50, 50, 55, 255)
+                    trackBorderColor
                 );
             }
 

@@ -5,7 +5,7 @@
 #include <portable-file-dialogs.h>
 
 #include "Project/ProjectManager.h"
-#include "Common/Log.h"
+#include "Common/Logging.h"
 
 namespace Tapedawf {
     class ProjectManagerWindow {

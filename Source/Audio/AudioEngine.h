@@ -5,7 +5,7 @@
 #include <type_traits>
 #include "Common/AudioCommands.h"
 
-#include "Common/Log.h"
+#include "Common/Logging.h"
 
 namespace Tapedawf {
     class AudioEngine {
