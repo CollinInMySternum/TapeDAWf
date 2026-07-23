@@ -126,7 +126,8 @@ namespace Tapedawf {
             io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
             ImGuiStyle& style = ImGui::GetStyle();
-            Styles::setupImGuiNuklearDarkGrayStyle(style);
+            ImGui::StyleColorsDark();
+            //Styles::setupImGuiNuklearDarkGrayStyle(style);
 
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
                 style.WindowRounding = 0.0f;
@@ -135,7 +136,7 @@ namespace Tapedawf {
 
             std::string fontPath = getExecutableRelativePath("Resources/Fonts/Montserrat/Montserrat-Medium.ttf").string();
             std::cout << fontPath;
-            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+            //io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
 
             ImGui_ImplGlfw_InitForOpenGL(m_window, true);
             ImGui_ImplOpenGL3_Init("#version 330");

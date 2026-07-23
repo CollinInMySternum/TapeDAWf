@@ -3,6 +3,10 @@
 class Styles {
 
 public:
+	static void setupImGuiDarkStyle(ImGuiStyle& style) {
+		setupImGuiDarkStyle(style);
+	}
+
 	static void setupImGuiDraculaStyle(ImGuiStyle& style) {
 	    // --- 1. Sizing and Spacing (Clean & Balanced) ---
 	    style.WindowPadding = ImVec2(10.0f, 10.0f);
