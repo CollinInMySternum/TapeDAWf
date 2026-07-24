@@ -4,11 +4,17 @@
 #include <iostream>
 #include <chrono>
 
-#define LOG(tag, fmtString, ...) \
-do { \
-    auto timePoint = std::chrono::system_clock::now(); \
-    auto localTime = std::chrono::zoned_time{std::chrono::current_zone(), timePoint}; \
-    auto timeSecs = std::chrono::floor<std::chrono::seconds>(localTime.get_local_time()); \
-    std::string formattedMsg = std::format(fmtString, ##__VA_ARGS__); \
-    std::cout << std::format("[{:%H:%M:%S}] [{}] {}\n", timeSecs, tag, formattedMsg); \
-} while(0)
+namespace Tapedawf {
+    template<typename... Args>
+    inline void LOG(std::string_view tag, std::format_string<Args...> fmt, Args&&... args) {
+        auto now = std::chrono::system_clock::now();
+        auto local = std::chrono::zoned_time{std::chrono::current_zone(), now};
+        auto secs = std::chrono::floor<std::chrono::seconds>(local.get_local_time());
+
+        std::cout << std::format(
+            "[{:%H:%M:%S}] [{}] {}\n",
+            secs,
+            tag,
+            std::format(fmt, std::forward<Args>(args)...));
+    }
+}
