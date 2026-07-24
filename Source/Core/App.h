@@ -127,16 +127,13 @@ namespace Tapedawf {
 
             ImGuiStyle& style = ImGui::GetStyle();
             ImGui::StyleColorsDark();
-            //Styles::setupImGuiNuklearDarkGrayStyle(style);
+            Styles::setupImGuiChernoDarkStyle(style);
 
-            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-                style.WindowRounding = 0.0f;
-                style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-            }
+            std::string fontPath = getExecutableRelativePath("Resources/Fonts/OpenSans/OpenSans-Bold.ttf").string();
+            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
 
-            std::string fontPath = getExecutableRelativePath("Resources/Fonts/Montserrat/Montserrat-Medium.ttf").string();
-            std::cout << fontPath;
-            //io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+            std::string fontDefaultPath = getExecutableRelativePath("Resources/Fonts/OpenSans/OpenSans-Regular.ttf").string();
+            io.FontDefault = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
 
             ImGui_ImplGlfw_InitForOpenGL(m_window, true);
             ImGui_ImplOpenGL3_Init("#version 330");
